@@ -45,7 +45,13 @@ FastlyParse is the creator's newer parser project, but its public API differs fr
 
 ## Usage
 
-Run `Main.lua` directly in a compatible Roblox executor. Do not use the old deleted-repository loadstring.
+Run the latest release from GitHub:
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/egoDtheTurtle/Sigma-Spy/main/Main.lua"))()
+```
+
+For an offline copy that does not depend on GitHub being available, download this repository and run `Main.lua` directly in a compatible Roblox executor. Do not use the old deleted-repository loadstring.
 
 On first run, Sigma Spy creates its editable configuration files in the executor workspace folder:
 

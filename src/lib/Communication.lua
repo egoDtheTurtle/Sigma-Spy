@@ -38,7 +38,7 @@ function CommWrapper:Fire(...)
     table.insert(Queue, {...})
 end
 
-function CommWrapper:ProcessArguments(Arguments) 
+function CommWrapper:ProcessArguments(Arguments)
     local Channel = self.Channel
     Channel:Fire(Process:Unpack(Arguments))
 end
@@ -49,7 +49,7 @@ function CommWrapper:ProcessQueue()
     for Index = 1, #Queue do
         local Arguments = table.remove(Queue)
         pcall(function()
-            self:ProcessArguments(Arguments) 
+            self:ProcessArguments(Arguments)
         end)
     end
 end
@@ -136,10 +136,10 @@ end
 
 function Module:CheckValue(Value, Inbound: boolean?)
      --// No serializing  needed
-    if typeof(Value) ~= "table" then 
-        return Value 
+    if typeof(Value) ~= "table" then
+        return Value
     end
-   
+
     --// Deserialize
     if Inbound then
         return self:DeserializeTable(Value)
@@ -161,14 +161,14 @@ end
 function Module:MakePacket(Index, Value): table
     self:WaitCheck()
     return {
-        Index = self:CheckValue(Index), 
+        Index = self:CheckValue(Index),
         Value = self:CheckValue(Value)
     }
 end
 
 function Module:ReadPacket(Packet: table): (any, any)
     if typeof(Packet) ~= "table" then return Packet end
-    
+
     local Key = self:CheckValue(Packet.Index, true)
     local Value = self:CheckValue(Packet.Value, true)
     self:WaitCheck()
@@ -199,12 +199,12 @@ function Module:DeserializeTable(Serialized: table): table
 
     local Table = {}
     DeserializeCache[Serialized] = Table
-    
+
     for _, Packet in next, Serialized do
         local Index, Value = self:ReadPacket(Packet)
-        if Index == nil then continue end
-
-        Table[Index] = Value
+        if Index ~= nil then
+            Table[Index] = Value
+        end
     end
 
     return Table

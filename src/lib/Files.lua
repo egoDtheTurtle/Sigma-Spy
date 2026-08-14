@@ -14,6 +14,41 @@ local Files = {
 	}
 }
 
+local EmbeddedFiles = {
+	["templates/Config.lua"] = [==[
+return {
+    ForceUseCustomComm = false,
+    ReplaceMetaCallFunc = false,
+    NoReceiveHooking = false,
+    BlackListedServices = {"RobloxReplicatedStorage"},
+    ForceKonstantDecompiler = false,
+    VariableNames = {"RIFT_IS_DETECTED%.d", "Skibidi%.d", "AURA%.d", "Sigma%.d", "Mango%.d", "Phonk%.d", "Argument%.d"},
+    SyntaxColors = {
+        Text = Color3.fromRGB(204, 204, 204), Background = Color3.fromRGB(20, 20, 20),
+        Selection = Color3.fromRGB(255, 255, 255), SelectionBack = Color3.fromRGB(102, 161, 255),
+        Operator = Color3.fromRGB(204, 204, 204), Number = Color3.fromRGB(255, 198, 0),
+        String = Color3.fromRGB(172, 240, 148), Comment = Color3.fromRGB(102, 102, 102),
+        Keyword = Color3.fromRGB(248, 109, 124), BuiltIn = Color3.fromRGB(132, 214, 247),
+        LocalMethod = Color3.fromRGB(253, 251, 172), LocalProperty = Color3.fromRGB(97, 161, 241),
+        Nil = Color3.fromRGB(255, 198, 0), Bool = Color3.fromRGB(255, 198, 0),
+        Function = Color3.fromRGB(248, 109, 124), Local = Color3.fromRGB(248, 109, 124),
+        Self = Color3.fromRGB(248, 109, 124), FunctionName = Color3.fromRGB(253, 251, 172),
+        Bracket = Color3.fromRGB(204, 204, 204)
+    },
+    MethodColors = {
+        fireserver = Color3.fromRGB(242, 255, 0), invokeserver = Color3.fromRGB(99, 86, 245),
+        onclientevent = Color3.fromRGB(77, 245, 105), onclientinvoke = Color3.fromRGB(77, 178, 245),
+        event = Color3.fromRGB(77, 245, 181), invoke = Color3.fromRGB(245, 77, 77),
+        oninvoke = Color3.fromRGB(245, 77, 209), fire = Color3.fromRGB(245, 141, 77)
+    },
+    ThemeConfig = {BaseTheme = "ImGui", TextSize = 12}
+}
+]==],
+	["templates/Return Spoofs.lua"] = [==[
+return {}
+]==]
+}
+
 --// Services
 local HttpService: HttpService
 
@@ -33,37 +68,6 @@ function Files:PushConfig(Config: table)
 	end
 end
 
-function Files:UrlFetch(Url: string): string
-	--// Request data
-    local Final = {
-        Url = Url:gsub(" ", "%%20"), 
-        Method = 'GET'
-    }
-
-	 --// Send HTTP request
-    local Success, Responce = pcall(request, Final)
-
-    --// Error check
-    if not Success then 
-        warn("[!] HTTP request error! Check console (F9)")
-        warn("> Url:", Url)
-        error(Responce)
-        return ""
-    end
-
-    local Body = Responce.Body
-    local StatusCode = Responce.StatusCode
-
-	--// Status code check
-    if StatusCode == 404 then
-        warn("[!] The file requested has moved or been deleted.")
-        warn(" >", Url)
-        return ""
-    end
-
-    return Body, Responce
-end
-
 function Files:MakePath(Path: string)
 	local Folder = self.Folder
 	return `{Folder}/{Path}`
@@ -79,7 +83,7 @@ function Files:LoadCustomasset(Path: string): string?
 
 	--// Load custom AssetId
 	local Success, AssetId = pcall(getcustomasset, Path)
-	
+
 	if not Success then return end
 	if not AssetId or #AssetId <= 0 then return end
 
@@ -87,18 +91,22 @@ function Files:LoadCustomasset(Path: string): string?
 end
 
 function Files:GetFile(Path: string, CustomAsset: boolean?): string?
-	local RepoUrl = self.RepoUrl
 	local UseWorkspace = self.UseWorkspace
 
 	local LocalPath = self:MakePath(Path)
-	local Content = ""
+	local Content = EmbeddedFiles[Path]
 
-	--// Check if the files should be fetched from the workspace instead
-	if UseWorkspace then
+	--// Workspace files are an optional override for local customization.
+	if not Content and UseWorkspace then
+		if not isfile(LocalPath) then
+			if CustomAsset then return end
+			error(`Missing workspace file: {LocalPath}`)
+		end
 		Content = readfile(LocalPath)
-	else
-		--// Download with a HTTP request
-		Content = self:UrlFetch(`{RepoUrl}/{Path}`)
+	elseif not Content and CustomAsset then
+		return
+	elseif not Content then
+		error(`Missing embedded file: {Path}`)
 	end
 
 	--// Custom asset
@@ -142,12 +150,11 @@ function Files:CheckFolders(Structure: table, Path: string?)
 			local NewPath = self:CheckPath(Path, ParentName)
 			self:FolderCheck(NewPath)
 			self:CheckFolders(Name, NewPath)
-			continue
+		else
+			--// Check existance of child folder
+			local FolderPath = self:CheckPath(Path, Name)
+			self:FolderCheck(FolderPath)
 		end
-
-		--// Check existance of child folder
-		local FolderPath = self:CheckPath(Path, Name)
-		self:FolderCheck(FolderPath)
 	end
 end
 
@@ -187,33 +194,32 @@ function Files:LoadLibraries(Scripts: table, ...): table
 		Content = IsBase64 and Content[2] or Content
 
 		--// Tables
-		if typeof(Content) ~= "string" and not IsBase64 then 
+		if typeof(Content) ~= "string" and not IsBase64 then
 			Modules[Name] = Content
-			continue 
+		else
+			--// Decode Base64
+			if IsBase64 then
+				Content = crypt.base64decode(Content)
+				Scripts[Name] = Content
+			end
+
+			--// Compile library
+			local Closure, Error = loadstring(Content, Name)
+			assert(Closure, `Failed to load {Name}: {Error}`)
+
+			Modules[Name] = Closure(...)
 		end
-
-		--// Decode Base64
-		if IsBase64 then
-			Content = crypt.base64decode(Content)
-			Scripts[Name] = Content
-		end
-
-		--// Compile library 
-		local Closure, Error = loadstring(Content, Name)
-		assert(Closure, `Failed to load {Name}: {Error}`)
-
-		Modules[Name] = Closure(...)
 	end
 	return Modules
 end
 
 function Files:LoadModules(Modules: {}, Data: {})
     for Name, Module in next, Modules do
-        local Init = Module.Init
-        if not Init then continue end
-
-		--// Invoke :Init function 
-        Module:Init(Data)
+		local Init = Module.Init
+		if Init then
+			--// Invoke :Init function
+			Module:Init(Data)
+		end
     end
 end
 
@@ -245,8 +251,9 @@ end
 function Files:CompileModule(Scripts): string
     local Out = "local Libraries = {"
     for Name, Content in Scripts do
-		if typeof(Content) ~= "string" then continue end
-        Out ..= `	{Name} = (function()\n{Content}\nend)(),\n`
+		if typeof(Content) == "string" then
+			Out ..= `	{Name} = (function()\n{Content}\nend)(),\n`
+		end
     end
 	Out ..= "}"
     return Out

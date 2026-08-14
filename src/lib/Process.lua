@@ -124,8 +124,9 @@ function Process:GetConfigOverwrites(Name: string)
     local ConfigOverwrites = self.ConfigOverwrites
 
     for List, Overwrites in next, ConfigOverwrites do
-        if not table.find(List, Name) then continue end
-        return Overwrites
+        if table.find(List, Name) then
+            return Overwrites
+        end
     end
     return
 end
@@ -150,7 +151,7 @@ end
 function Process:CountMatches(String: string, Match: string): number
 	local Count = 0
 	for _ in String:gmatch(Match) do
-		Count +=1 
+		Count +=1
 	end
 
 	return Count
@@ -159,13 +160,13 @@ end
 function Process:CheckValue(Value, Ignore: table?, Cache: table?)
     local Type = typeof(Value)
     Communication:WaitCheck()
-    
+
     if Type == "table" then
         Value = self:DeepCloneTable(Value, Ignore, Cache)
     elseif Type == "Instance" then
         Value = cloneref(Value)
     end
-    
+
     return Value
 end
 
@@ -183,17 +184,17 @@ function Process:DeepCloneTable(Table, Ignore: table?, Visited: table?): table
 
     for Key, Value in next, Table do
         --// Check if the value is ignored
-        if Ignore and table.find(Ignore, Value) then continue end
-        
-        Key = self:CheckValue(Key, Ignore, Cache)
-        New[Key] = self:CheckValue(Value, Ignore, Cache)
+        if not (Ignore and table.find(Ignore, Value)) then
+            Key = self:CheckValue(Key, Ignore, Cache)
+            New[Key] = self:CheckValue(Value, Ignore, Cache)
+        end
     end
 
     --// Master clear
     if not Visited then
         table.clear(Cache)
     end
-    
+
     return New
 end
 
@@ -241,11 +242,11 @@ function Process:CheckFunctions(): boolean
     --// Check if the functions exist in the ENV
     for _, Name in CoreFunctions do
         local Func = self:FuncExists(Name)
-        if Func then continue end
-
-        --// Function missing!
-        Ui:ShowUnsupported(Name)
-        return false
+        if not Func then
+            --// Function missing!
+            Ui:ShowUnsupported(Name)
+            return false
+        end
     end
 
     return true
@@ -283,7 +284,7 @@ end
 
 function Process:RemoteAllowed(Remote: Instance, TransferType: string, Method: string?): boolean?
     if typeof(Remote) ~= 'Instance' then return end
-    
+
     --// Check if the Remote is protected
     if self:IsProtectedRemote(Remote) then return end
 
@@ -337,14 +338,14 @@ function Process:FindCallingLClosure(Offset: number)
 
         --// Check if the stack level is valid
         local IsValid = debug.info(Offset, "l") ~= -1
-        if not IsValid then continue end
-
-        --// Check if the function is valid
-        local Function = debug.info(Offset, "f")
-        if not Function then return end
-        if Getfenv(Function) == SigmaENV then continue end
-
-        return Function
+        if IsValid then
+            --// Check if the function is valid
+            local Function = debug.info(Offset, "f")
+            if not Function then return end
+            if Getfenv(Function) ~= SigmaENV then
+                return Function
+            end
+        end
     end
 end
 
@@ -353,7 +354,7 @@ function Process:Decompile(Script: LocalScript | ModuleScript): string
     local ForceKonstant = Config.ForceKonstantDecompiler
 
     --// Use built-in decompiler if the executor supports it
-    if decompile and not ForceKonstant then 
+    if decompile and not ForceKonstant then
         return decompile(Script)
     end
 
@@ -364,7 +365,7 @@ function Process:Decompile(Script: LocalScript | ModuleScript): string
         Error ..= `\n--[[\n{Bytecode}\n]]`
         return Error, true
     end
-    
+
     --// Send POST request to the API
     local Responce = request({
         Url = KonstantAPI,
@@ -390,7 +391,7 @@ function Process:GetScriptFromFunc(Func: (...any) -> ...any)
 
     local Success, ENV = pcall(getfenv, Func)
     if not Success then return end
-    
+
     --// Blacklist sigma spy
     if self:IsSigmaSpyENV(ENV) then return end
 
@@ -421,8 +422,8 @@ function Process:ConnectionIsValid(Connection: table): boolean
         end
 
         --// Check if the property has a value
-        if Value == nil then 
-            return false 
+        if Value == nil then
+            return false
         end
     end
 
@@ -434,8 +435,9 @@ function Process:FilterConnections(Signal: RBXScriptSignal): table
 
     --// Filter each connection
     for _, Connection in getconnections(Signal) do
-        if not self:ConnectionIsValid(Connection) then continue end
-        table.insert(Processed, Connection)
+        if self:ConnectionIsValid(Connection) then
+            table.insert(Processed, Connection)
+        end
     end
 
     return Processed
@@ -451,7 +453,7 @@ function Process:GetRemoteData(Id: string)
     --// Check for existing remote data
 	local Existing = RemoteOptions[Id]
 	if Existing then return Existing end
-	
+
     --// Base remote data
 	local Data = {
 		Excluded = false,

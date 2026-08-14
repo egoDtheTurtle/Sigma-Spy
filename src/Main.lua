@@ -1,10 +1,10 @@
 --// Base Configuration
 local Configuration = {
-	UseWorkspace = false, 
+	UseWorkspace = false,
 	NoActors = false,
 	FolderName = "Sigma Spy",
-	RepoUrl = "https://raw.githubusercontent.com/depthso/Sigma-Spy/refs/heads/main",
-	ParserUrl = "https://raw.githubusercontent.com/depthso/Roblox-parser/refs/heads/main/dist/Main.luau"
+	RepoUrl = nil,
+	ParserUrl = nil
 }
 
 --// Load overwrites
@@ -64,8 +64,10 @@ local Config = Modules.Config
 
 --// Use custom font (optional)
 local FontContent = Files:GetAsset("ProggyClean.ttf", true)
-local FontJsonFile = Files:CreateFont("ProggyClean", FontContent)
-Ui:SetFontFile(FontJsonFile)
+if FontContent then
+	local FontJsonFile = Files:CreateFont("ProggyClean", FontContent)
+	Ui:SetFontFile(FontJsonFile)
+end
 
 --// Load modules
 Process:CheckConfig(Config)
@@ -79,7 +81,7 @@ local Window = Ui:CreateMainWindow()
 
 --// Check if Sigma spy is supported
 local Supported = Process:CheckIsSupported()
-if not Supported then 
+if not Supported then
 	Window:Close()
 	return
 end
@@ -108,7 +110,7 @@ end)
 --// Create window content
 Ui:CreateWindowContent(Window)
 
---// Begin the Log queue 
+--// Begin the Log queue
 Ui:SetCommChannel(Event)
 Ui:BeginLogService()
 

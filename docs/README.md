@@ -2,14 +2,11 @@
 A complete Remote Spy with an incredible parser that captures incoming and outgoing remotes data with Actor support!
 
 ## Socials 💬
-- [Sigma Spy Showcase (Youtube)](https://www.youtube.com/watch?v=Q4VrpE1UfHg) 
-- [Discord](https://discord.gg/s9ngmUDWgb) 
+- [Sigma Spy Showcase (Youtube)](https://www.youtube.com/watch?v=Q4VrpE1UfHg)
+- [Discord](https://discord.gg/s9ngmUDWgb)
 
 ## Loadstring
-```lua
---// Sigma Spy @depso
-loadstring(game:HttpGet("https://raw.githubusercontent.com/depthso/Sigma-Spy/refs/heads/main/Main.lua"))()
-```
+Run the bundled `Main.lua` directly. The release includes its parser, UI library, templates, and runtime modules.
 
 ## Notices 🔔
 - Sigma Spy will have bugs, please report any bugs by opening an [issue](https://github.com/depthso/Sigma-Spy/issues) on Github
@@ -60,7 +57,7 @@ These are some of the many features Sigma Spy has
   </tr>
   <tr>
     <td><b>ForceUseCustomComm</b></td>
-    <td>Forces Sigma Spy to use the built-in comm library. 
+    <td>Forces Sigma Spy to use the built-in comm library.
 	This is automatically used if you executor does not support it</td>
   </tr>
   <tr>
@@ -92,13 +89,13 @@ Your executor must support these functions in order for it to function:
 | ------------ | ------------- |
 | hookmetamethod | getcustomasset *(Optional for the true ImGui theme)*
 | hookfunction | Comm library (get_comm_channel, create_comm_channel) *(Optional)*
-| getrawmetatable | 
-| setreadonly| 
+| getrawmetatable |
+| setreadonly|
 | File library |
 | getconnections |
 | newcclosure |
 
 
 ## Libraries used
-- [ReGui (Depso)](https://github.com/depthso/Dear-ReGui/tree/main) 
-- [Roblox-Parser (Depso)](https://github.com/depthso/Roblox-parser) 
+- ReGui is bundled in `src/lib/ReGui.lua`.
+- The parser is bundled in `src/lib/Roblox-parser.luau`.

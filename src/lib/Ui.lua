@@ -6,18 +6,18 @@ local Ui = {
 	Discord: https://discord.gg/bkUkm2vSbv
 ]]]=],
 	LogLimit = 100,
-    SeasonLabels = { 
-        January = "⛄ %s ⛄", 
-        February = "🌨️ %s 🏂", 
-        March = "🌹 %s🌺 ", 
-        April = "🐣 %s ✝️", 
-        May = "🐝 %s 🌞", 
-        June = "🌲 %s 🥕", 
-        July = "🌊 %s 🌅", 
-        August = "☀️ %s 🌞", 
-        September = "🍁 %s 🍁", 
-        October = "🎃 %s 🎃", 
-        November = "🍂 %s 🍂", 
+    SeasonLabels = {
+        January = "⛄ %s ⛄",
+        February = "🌨️ %s 🏂",
+        March = "🌹 %s🌺 ",
+        April = "🐣 %s ✝️",
+        May = "🐝 %s 🌞",
+        June = "🌲 %s 🥕",
+        July = "🌊 %s 🌅",
+        August = "☀️ %s 🌞",
+        September = "🍁 %s 🍁",
+        October = "🎃 %s 🎃",
+        November = "🍂 %s 🍂",
         December = "🎄 %s 🎁"
     },
 	Scales = {
@@ -44,7 +44,7 @@ local Ui = {
     RandomSeed = Random.new(tick()),
 	Logs = setmetatable({}, {__mode = "k"}),
 	LogQueue = setmetatable({}, {__mode = "v"}),
-} 
+}
 
 type table = {
 	[any]: any
@@ -74,13 +74,15 @@ type Log = {
 local SetClipboard = setclipboard or toclipboard or set_clipboard
 
 --// Libraries
-local ReGui = loadstring(game:HttpGet('https://github.com/depthso/Dear-ReGui/raw/refs/heads/main/ReGui.lua'), "ReGui")()
+local ReGui = (function()
+	--INSERT: @lib/ReGui.lua
+end)()
 
 --// Modules
 local Flags
 local Generation
 local Process
-local Hook 
+local Hook
 local Config
 local Communication
 local Files
@@ -210,10 +212,10 @@ function Ui:CreateWindow(WindowConfig)
 	local Window = ReGui:Window(Config)
 
 	--// Switch to DarkTheme instead of the ImGui theme if the font cannot be loaded
-	if not FontSuccess then 
+	if not FontSuccess then
 		Window:SetTheme("DarkTheme")
 	end
-	
+
 	--// Create Window
 	return Window
 end
@@ -358,7 +360,7 @@ end
 
 function Ui:CreateElements(Parent, Options)
 	local OptionTypes = self.OptionTypes
-	
+
 	--// Create table layout
 	local Table = Parent:Table({
 		MaxColumns = 3
@@ -373,7 +375,7 @@ function Ui:CreateElements(Parent, Options)
 			Class = OptionTypes[Type],
 			Label = Name,
 		})
-		
+
 		--// Check if a element type exists for value type
 		local Class = Data.Class
 		assert(Class, `No {Type} type exists for option`)
@@ -386,7 +388,7 @@ function Ui:CreateElements(Parent, Options)
 		Container = self:CheckKeybindLayout(Container, Keybind, function()
 			Checkbox:Toggle()
 		end)
-		
+
 		--// Create column and element
 		Checkbox = Container[Class](Container, Data)
 	end
@@ -448,7 +450,7 @@ function Ui:CreateWindowContent(Window)
 	--// Make tabs
 	self:MakeEditorTab(InfoSelector)
 	self:MakeOptionsTab(InfoSelector)
-	
+
 	if Config.Debug then
 		self:ConsoleTab(InfoSelector)
 	end
@@ -559,7 +561,7 @@ function Ui:MakeOptionsTab(InfoSelector)
 			{
 				Text = "Copy Github",
 				Callback = function()
-					self:SetClipboard("https://github.com/depthso/Sigma-Spy")
+					self:SetClipboard("Sigma Spy")
 				end,
 			},
 			{
@@ -669,7 +671,7 @@ function Ui:MakeEditorTab(InfoSelector)
 			},
 		}
 	})
-	
+
 	self.CodeEditor = CodeEditor
 end
 
@@ -731,7 +733,7 @@ function Ui:EditFile(FilePath: string, InFolder: boolean, OnSaveFunc: ((table, s
 	--// Get file content
 	local Content = readfile(FilePath)
 	Content = Content:gsub("\r\n", "\n")
-	
+
 	local Buttons = {
 		{
 			Text = "Save",
@@ -744,7 +746,7 @@ function Ui:EditFile(FilePath: string, InFolder: boolean, OnSaveFunc: ((table, s
 					self:ShowModal({"Error saving file!\n", Error})
 					return
 				end
-				
+
 				--// Save contents
 				writefile(FilePath, Script)
 
@@ -786,8 +788,8 @@ end
 
 function Ui:RemovePreviousTab(Title: string): boolean
 	--// No previous tabs
-	if not ActiveData then 
-		return false 
+	if not ActiveData then
+		return false
 	end
 
 	--// TabSelector
@@ -853,18 +855,18 @@ function Ui:DisplayTable(Parent, Config: DisplayTableConfig): table
 	--// Table layout
 	for RowIndex, Name in ToDisplay do
 		local Row = Table:Row()
-		
+
 		--// Create Columns
 		for Count, Catagory in Rows do
 			local Column = Row:NextColumn()
-			
+
 			--// Value text
 			local Value = Catagory == "Name" and Name or DataTable[Name]
-			if not Value then continue end
-
-			--// Create filtered label
-			local String = self:FilterName(`{Value}`, 150)
-			Column:Label({Text=String})
+			if Value then
+				--// Create filtered label
+				local String = self:FilterName(`{Value}`, 150)
+				Column:Label({Text=String})
+			end
 		end
 	end
 
@@ -928,15 +930,15 @@ function Ui:SetFocusedRemote(Data)
 	end
 	local function ScriptCheck(Script, NoMissingCheck: boolean): boolean?
 		--// Reject client events
-		if IsReceive then 
+		if IsReceive then
 			Ui:ShowModal({
 				"Recieves do not have a script because it's a Connection"
 			})
-			return 
+			return
 		end
 
 		--// Check if script exists
-		if not Script and not NoMissingCheck then 
+		if not Script and not NoMissingCheck then
 			Ui:ShowModal({"The Script has been destroyed by the game (-9999999 AURA)"})
 			return
 		end
@@ -974,7 +976,7 @@ function Ui:SetFocusedRemote(Data)
 		if not ScriptCheck(Script, true) then return end
 
 		--// getscriptbytecode
-    	local Success, Bytecode = pcall(getscriptbytecode, Script)
+		local Success, Bytecode = pcall(getscriptbytecode, Script)
 		if not Success then
 			Ui:ShowModal({"Failed to get Scripte bytecode (-9999999 AURA)"})
 			return
@@ -1033,7 +1035,7 @@ function Ui:SetFocusedRemote(Data)
 		--// Problem check
 		if not ScriptCheck(ToDecompile, true) then return end
 		local Task = Ui:FilterName(`Viewing: {ToDecompile}.lua`, 200)
-		
+
 		--// Automatically Pop-out the editor for decompiling if enabled
 		if DecompilePopout then
 			Editor = Ui:MakeEditorPopoutWindow("", {
@@ -1043,7 +1045,7 @@ function Ui:SetFocusedRemote(Data)
 
 		Ui:Decompile(Editor, ToDecompile)
 	end
-	
+
 	--// RemoteOptions
 	self:CreateOptionsForDict(Tab, RemoteData, function()
 		Process:UpdateRemoteData(Id, RemoteData)
@@ -1113,7 +1115,7 @@ function Ui:SetFocusedRemote(Data)
 			MaxColumns = 2
 		}
 	})
-	
+
 	--// Arguments table script
 	if TableArgs then
 		local Parsed = Generation:TableScript(Module, Args)
@@ -1223,7 +1225,7 @@ function Ui:GetRemoteHeader(Data: Log)
 	if Existing then return Existing end
 
 	--// Header data
-	local HeaderData = {	
+	local HeaderData = {
 		LogCount = 0,
 		Data = Data,
 		Entries = {}
@@ -1243,7 +1245,7 @@ function Ui:GetRemoteHeader(Data: Log)
 	function HeaderData:CheckLimit()
 		local Entries = self.Entries
 		if #Entries < LogLimit then return end
-			
+
 		--// Get and remove last element
 		local Log = table.remove(Entries, 1)
 		Log.Selectable:Remove()
@@ -1257,7 +1259,7 @@ function Ui:GetRemoteHeader(Data: Log)
 		--// Add entry
 		local Entries = self.Entries
 		table.insert(Entries, Data)
-		
+
 		return self
 	end
 
@@ -1298,7 +1300,7 @@ function Ui:QueueLog(Data)
 	if Data.ReturnValues then
         Data.ReturnValues = Process:DeepCloneTable(Data.ReturnValues)
     end
-	
+
     table.insert(LogQueue, Data)
 end
 
@@ -1339,7 +1341,7 @@ function Ui:CreateLog(Data: Log)
 	local Id = Data.Id
 	local Timestamp = Data.Timestamp
 	local IsExploit = Data.IsExploit
-	
+
 	local IsNilParent = Hook:Index(Remote, "Parent") == nil
 	local RemoteData = Process:GetRemoteData(Id)
 
@@ -1394,7 +1396,7 @@ function Ui:CreateLog(Data: Log)
 	local RemotesList = self.RemotesList
 
 	local LogCount = Header.LogCount
-	local TreeNode = Header.TreeNode 
+	local TreeNode = Header.TreeNode
 	local Parent = TreeNode or RemotesList
 
 	--// Increase log count - TreeNodes are in GetRemoteHeader function

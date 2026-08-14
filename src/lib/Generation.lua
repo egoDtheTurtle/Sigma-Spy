@@ -16,7 +16,7 @@ type RemoteData = {
 --// Module
 local Generation = {
 	DumpBaseName = "SigmaSpy-Dump %s.lua", -- "-- Generated with sigma spy BOIIIIIIIII (+9999999 AURA)\n"
-	Header = "-- Generated with Sigma Spy Github: https://github.com/depthso/Sigma-Spy\n",
+	Header = "-- Generated with the self-contained Sigma Spy build\n",
 	ScriptTemplates = {
 		["Remote"] = {
 			{"%RemoteCall%"}
@@ -62,6 +62,9 @@ local Generation = {
 local Config
 local Hook
 local ParserModule
+local ParserSource = [==[
+	--INSERT: @lib/Roblox-parser.luau
+]==]
 local Flags
 local ThisScript = script
 
@@ -80,7 +83,7 @@ function Generation:Init(Data: table)
 	Config = Modules.Config
 	Hook = Modules.Hook
 	Flags = Modules.Flags
-	
+
 	--// Import parser
 	local ParserUrl = Configuration.ParserUrl
 	self:LoadParser(ParserUrl)
@@ -108,7 +111,7 @@ function Generation:WriteDump(Content: string): string
 end
 
 function Generation:LoadParser(ModuleUrl: string)
-	ParserModule = loadstring(game:HttpGet(ModuleUrl), "Parser")()
+	ParserModule = loadstring(ParserSource, "Parser")()
 end
 
 function Generation:MakeValueSwapsTable(): table
@@ -233,10 +236,10 @@ function Generation:CallRemoteScript(Data, Info: CallInfo): string
 		local Code = `-- This data was received from the server`
 		ParsedArgs = self:Indent(IndentString, Code)
 		Code ..= `\n{IndentString}firesignal({Signal}{Second})`
-		
+
 		return Code
 	end
-	
+
 	--// Remote invoke script
 	return `{RemoteVariable}:{Method}({ParsedArgs})`
 end
@@ -285,24 +288,23 @@ function Generation:MakeCallCode(ScriptType: string, Data: ScriptData): string
 					local Line = Compile(Value)
 					Out ..= Line
 				end
-				continue
+			else
+				--// Information
+				local Content, Indent = Value[1], Value[2] or 0
+				Indent = math.clamp(Indent-1, 0, 9999)
+
+				--// Make line
+				local Line = self:ApplyVariables(Content, Variables, Indent)
+				local IndentString = self:MakeIndent(Indent)
+
+				--// Append to code
+				Out ..= `{IndentString}{Line}\n`
 			end
-
-			--// Information
-			local Content, Indent = Value[1], Value[2] or 0
-			Indent = math.clamp(Indent-1, 0, 9999)
-
-			--// Make line
-			local Line = self:ApplyVariables(Content, Variables, Indent)
-			local IndentString = self:MakeIndent(Indent)
-
-			--// Append to code
-			Out ..= `{IndentString}{Line}\n`
 		end
 
 		return Out
 	end
-	
+
 	return Compile(Template)
 end
 
@@ -316,10 +318,10 @@ function Generation:RemoteScript(Module, Data: RemoteData, ScriptType: string): 
 	--// Remote info
 	local ClassName = Hook:Index(Remote, "ClassName")
 	local IsNilParent = Hook:Index(Remote, "Parent") == nil
-	
+
 	local Variables = Module.Variables
 	local Formatter = Module.Formatter
-	
+
 	--// Pre-render variables
 	Variables:PrerenderVariables(Args, {"Instance"})
 
@@ -350,7 +352,7 @@ function Generation:RemoteScript(Module, Data: RemoteData, ScriptType: string): 
 		},
 		MetaMethod = MetaMethod
 	})
-	
+
 	--// Make code
 	local Code = self:GetBase(Module)
 	return `{Code}\n{CallCode}`
@@ -364,17 +366,16 @@ function Generation:ConnectionsTable(Signal: RBXScriptSignal): table
 		local Function = Connection.Function
 		local Script = rawget(getfenv(Function), "script")
 
-		--// Skip if self
-		if Script == ThisScript then continue end
+		if Script ~= ThisScript then
+			--// Connection data
+			local Data = {
+				Function = Function,
+				State = Connection.State,
+				Script = Script
+			}
 
-		--// Connection data
-		local Data = {
-			Function = Function,
-			State = Connection.State,
-			Script = Script
-		}
-
-		table.insert(DataArray, Data)
+			table.insert(DataArray, Data)
+		end
 	end
 
 	return DataArray
@@ -433,7 +434,7 @@ function Generation:AdvancedInfo(Module, Data: table): string
 	local ClassData = Data.ClassData
 	local Remote = Data.Remote
 	local Args = Data.Args
-	
+
 	--// Advanced info table base
 	local FunctionInfo = {
 		["Caller"] = {
@@ -501,7 +502,7 @@ function Generation:DumpLogs(Logs: table): string
 	--// Compile and save
 	local Output = self:TableScript(Module, Parsed)
 	local FilePath = self:WriteDump(Output)
-	
+
 	return FilePath
 end
 

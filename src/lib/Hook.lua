@@ -80,7 +80,7 @@ end
 function Hook:ReplaceMetaMethod(Object: Instance, Call: string, Callback: MetaFunc): MetaFunc
 	local Metatable = getrawmetatable(Object)
 	local OriginalFunc = clonefunction(Metatable[Call])
-	
+
 	--// Replace function
 	setreadonly(Metatable, false)
 	Metatable[Call] = newcclosure(function(...)
@@ -105,7 +105,7 @@ end
 function Hook:HookMetaCall(Object: Instance, Call: string, Callback: MetaFunc): MetaFunc
 	local Metatable = getrawmetatable(Object)
 	local Unhooked
-	
+
 	Unhooked = self:HookFunction(Metatable[Call], function(...)
 		return HookMiddle(Unhooked, Callback, true, ...)
 	end)
@@ -114,12 +114,12 @@ end
 
 function Hook:HookMetaMethod(Object: Instance, Call: string, Callback: MetaFunc): MetaFunc
 	local Func = newcclosure(Callback)
-	
+
 	--// Getrawmetatable
 	if Config.ReplaceMetaCallFunc then
 		return self:ReplaceMetaMethod(Object, Call, Func)
 	end
-	
+
 	--// Hookmetamethod
 	return self:HookMetaCall(Object, Call, Func)
 end
@@ -198,11 +198,11 @@ end
 
 function Hook:RunOnActors(Code: string, ChannelId: number)
 	if not getactors or not run_on_actor then return end
-	
+
 	local Actors = getactors()
 	if not Actors then return end
-	
-	for _, Actor in Actors do 
+
+	for _, Actor in Actors do
 		pcall(run_on_actor, Actor, Code, ChannelId)
 	end
 end
@@ -227,7 +227,7 @@ function Hook:HookRemoteTypeIndex(ClassName: string, FuncName: string)
 	--// Addionally, this is for __index calls.
 	--// 	A __namecall hook will not detect this
 	OriginalFunc = self:HookFunction(Func, function(self, ...)
-		--// Check if the Object is allowed 
+		--// Check if the Object is allowed
 		if not Process:RemoteAllowed(self, "Send", FuncName) then return end
 
 		--// Process the remote data
@@ -268,7 +268,7 @@ function Hook:HookClientInvoke(Remote, Method, Callback)
 	--// Some executors like Potassium will throw a error if the Callback value is nil
 	if not Success then return end
 	if not Function then return end
-	
+
 	--// Test hookfunction
 	local HookSuccess = pcall(function()
 		self:HookFunction(Function, Callback)
@@ -313,7 +313,7 @@ function Hook:ConnectClientRecive(Remote)
 
 	--// Connect remote
 	if not IsRemoteFunction then
-   		Remote[Method]:Connect(Callback)
+		Remote[Method]:Connect(Callback)
 	else -- Remote functions
 		self:HookClientInvoke(Remote, Method, Callback)
 	end
@@ -374,7 +374,7 @@ function Hook:BeginService(Libraries, ExtraData, ChannelId, ...)
 			Communication:ConsolePrint("Hooks loaded")
 		end
 	})
-	
+
 	--// Process configuration
 	ProcessLib:SetChannel(Channel, IsWrapped)
 	ProcessLib:SetExtraData(ExtraData)
@@ -394,7 +394,7 @@ function Hook:LoadMetaHooks(ActorCode: string, ChannelId: number)
 	end
 
 	--// Hook current thread
-	self:BeginService(Modules, nil, ChannelId) 
+	self:BeginService(Modules, nil, ChannelId)
 end
 
 function Hook:LoadReceiveHooks()
@@ -413,8 +413,9 @@ function Hook:LoadReceiveHooks()
 
 	--// Search for remotes
 	for _, Service in next, game:GetChildren() do
-		if table.find(BlackListedServices, Service.ClassName) then continue end
-		self:MultiConnect(Service:GetDescendants())
+		if not table.find(BlackListedServices, Service.ClassName) then
+			self:MultiConnect(Service:GetDescendants())
+		end
 	end
 end
 

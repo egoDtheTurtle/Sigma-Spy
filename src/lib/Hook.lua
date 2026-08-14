@@ -282,8 +282,14 @@ function Hook:HookClientInvoke(Remote, Method, Callback)
 end
 
 function Hook:MultiConnect(Remotes)
+	local Processed = 0
 	for _, Remote in next, Remotes do
 		self:ConnectClientRecive(Remote)
+		Processed += 1
+
+		if Processed % 100 == 0 then
+			task.wait()
+		end
 	end
 end
 
@@ -421,7 +427,9 @@ end
 
 function Hook:LoadHooks(ActorCode: string, ChannelId: number)
 	self:LoadMetaHooks(ActorCode, ChannelId)
-	self:LoadReceiveHooks()
+	task.spawn(function()
+		self:LoadReceiveHooks()
+	end)
 end
 
 return Hook

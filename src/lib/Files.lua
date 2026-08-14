@@ -15,6 +15,8 @@ local Files = {
 }
 
 local EmbeddedFiles = {
+	["assets/ProggyClean.ttf"] = {"base64", "ASSET: assets/ProggyClean.ttf"},
+	["assets/ReGuiPrefabs-v2.rbxm"] = {"base64", "ASSET: assets/ReGuiPrefabs.rbxm"},
 	["templates/Config.lua"] = [==[
 return {
     ForceUseCustomComm = false,
@@ -95,6 +97,10 @@ function Files:GetFile(Path: string, CustomAsset: boolean?): string?
 
 	local LocalPath = self:MakePath(Path)
 	local Content = EmbeddedFiles[Path]
+	local IsBase64 = typeof(Content) == "table" and Content[1] == "base64"
+	if IsBase64 then
+		Content = crypt.base64decode(Content[2])
+	end
 
 	--// Workspace files are an optional override for local customization.
 	if not Content and UseWorkspace then

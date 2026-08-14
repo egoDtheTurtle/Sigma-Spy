@@ -925,8 +925,10 @@ UpdateWindowFocuses()end)local p=function()local p,q=self.TooltipsContainer,#m>0
 p.Visible=q if not q then return end local r,s=aa:GetMouseLocation()local t=n.
 AbsolutePosition p.Position=UDim2.fromOffset(r-t.X+i,s-t.Y+i)end c.RenderStepped
 :Connect(p)end function aa:CheckImportState()if self.Initialised then return end
-local g=self.PrefabsId local h=ad:CheckAssetUrl(g)local i,m=pcall(function()
-return ad:NewReference(d:LoadLocalAsset(h))end)self:Init{Prefabs=i and m or nil}
+if self.Prefabs then self:Init()return end local g=self.PrefabsId
+local h=ad:CheckAssetUrl(g)local i,m=pcall(function()local n=game:GetObjects(h)
+return n and n[1]and ad:NewReference(n[1])or nil end)
+self:Init{Prefabs=i and m or nil}
 end function aa:GetVersion()return self.Version end function aa:IsMobileDevice()
 return b.TouchEnabled end function aa:IsConsoleDevice()return b.GamepadEnabled
 end function aa:GetScreenSize()return workspace.CurrentCamera.ViewportSize end
@@ -1037,8 +1039,10 @@ local q,r,s,t=p.Properties,p.Callback,p.Recursive,p.WindowProperties local u=
 self:GetValueFromAliases(q,m)if n and t and u==nil then u=self:
 GetValueFromAliases(t,n)end if u==nil then continue end r(g,i,u)if s then self:
 RecursiveCall(i,function(v)r(g,v,u)end)end end end function aa:SetProperties(g,h
-)return ad:SetProperties(g,h)end function aa:InsertPrefab(g,h)local i=self.
-Prefabs local m=i.Prefabs local n=ad:NewReference(m:WaitForChild(g):Clone())if h
+)return ad:SetProperties(g,h)end function aa:InsertPrefab(g,h)local i=self.Prefabs if not i then error(
+'ReGui prefab root is missing')end local m=i:FindFirstChild'Prefabs'or i local p=m:
+FindFirstChild(g)if not p then error('Missing ReGui prefab: '..g)end local n=ad:
+NewReference(p:Clone())if h
 then local o=h.UsePropertiesList if not o then self:SetProperties(n,h)else self:
 ApplyFlags{Object=n,Class=h}end end return n end function aa:GetContentSize(g,h)
 local i,m,n,o=g:FindFirstChildOfClass'UIListLayout',g:FindFirstChildOfClass
@@ -1076,8 +1080,10 @@ _ErrorCache,h.Base,h.IgnoreDefaults return function(o,p,...)p=p or{}self:
 CheckConfig(p,m)local q=p.CloneTable if q then p=table.clone(p)end local r,s,t=o
 .RawObject,o.Elements,o.OnChildChange self:CheckConfig(p,{Parent=r,Name=p.
 ColorTag},nil,n)if o==self then o=self.Elements end local u,v,x=pcall(g,o,p,...)
-if u==false then if r then if i[r]then return end i[r]=v end self:VisualError(o,
-r,v)self:Error('Class:',v)self:Error(debug.traceback())end if x==nil then x=v
+if u==false then if r then if i[r]then return end i[r]=v end if not self.
+_SigmaSpyHandlingVisualError
+then self._SigmaSpyHandlingVisualError=true self:VisualError(o,r,v)self.
+_SigmaSpyHandlingVisualError=false end self:Error('Class:',v)end if x==nil then x=v
 end if t then t:Fire(v)end if x then if s then table.insert(s,x)end self:
 OnElementCreate{Object=x,Flags=p,Class=v,Canvas=o}end return v,x end end
 function aa:DefineElement(g,h)local i,m,n=self.Elements,self.ThemeConfigs,self.

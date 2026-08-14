@@ -333,18 +333,16 @@ function Process:FindCallingLClosure(Offset: number)
     local Getfenv = Hook:GetOriginalFunc(getfenv)
     Offset += 1
 
-    while true do
-        Offset += 1
+    -- Bound the scan so an executor with unusual debug.info behavior cannot freeze the client.
+    for Level = Offset + 1, Offset + 128 do
+        if debug.info(Level, "l") == -1 then return end
 
-        --// Check if the stack level is valid
-        local IsValid = debug.info(Offset, "l") ~= -1
-        if IsValid then
-            --// Check if the function is valid
-            local Function = debug.info(Offset, "f")
-            if not Function then return end
-            if Getfenv(Function) ~= SigmaENV then
-                return Function
-            end
+        local Function = debug.info(Level, "f")
+        if not Function then return end
+
+        local Success, Environment = pcall(Getfenv, Function)
+        if Success and Environment ~= SigmaENV then
+            return Function
         end
     end
 end

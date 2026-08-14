@@ -107,6 +107,7 @@ function Ui:Init(Data)
 	Files = Modules.Files
 
 	--// ReGui
+	self:LoadReGuiPrefabs()
 	self:LoadFont()
 	self:LoadReGui()
 	self:CheckScale()
@@ -153,6 +154,28 @@ end
 
 function Ui:SetFontFile(FontFile: string)
 	self.FontJsonFile = FontFile
+end
+
+function Ui:LoadReGuiPrefabs()
+	local AssetId = Files:GetAsset("ReGuiPrefabs-v2.rbxm", true)
+	assert(AssetId, "Executor could not register the bundled ReGui prefab model")
+
+	local Success, Objects = pcall(function()
+		return game:GetObjects(AssetId)
+	end)
+	assert(Success and Objects, `Failed to load bundled ReGui prefabs: {Objects}`)
+
+	local Prefabs
+	for _, Object in Objects do
+		local Candidate = Object.Name == "Prefabs" and Object or Object:FindFirstChild("Prefabs", true)
+		if Candidate and Candidate:FindFirstChild("Container") then
+			Prefabs = Candidate
+			break
+		end
+	end
+	assert(Prefabs, "Bundled ReGui model does not contain the Prefabs/Container hierarchy")
+
+	ReGui.Prefabs = Prefabs
 end
 
 function Ui:FontWasSuccessful()
@@ -587,9 +610,9 @@ function Ui:AddDetailsSection(OptionsTab)
 	OptionsTab:Separator({Text="Information"})
 	OptionsTab:BulletText({
 		Rows = {
-			"Sigma spy - Written by depso!",
-			"Libraries: Roblox-Parser, Dear-ReGui",
-			"Thank you syn.lua for suggesting I make this"
+			"Original Sigma Spy by depso",
+			"Forked and rebuilt by egoDtheTurtle",
+			"Bundled: FastlyParse-based parser and Dear-ReGui"
 		}
 	})
 end
